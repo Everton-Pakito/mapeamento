@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Gravar Caminho Satélite</title>
+<title>App Caminho Satélite</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.5/dist/leaflet.css"/>
 <style>
   html, body { height: 100%; margin: 0; padding: 0; }
@@ -11,16 +11,13 @@
     position: absolute;
     bottom: 10px; left: 50%;
     transform: translateX(-50%);
-    background: rgba(255,255,255,0.95);
-    padding: 10px; border-radius: 8px;
-    display: flex; flex-wrap: wrap; gap: 10px;
-    justify-content: center;
+    display: flex; gap: 10px; background: rgba(255,255,255,0.95);
+    padding: 10px; border-radius: 8px; flex-wrap: wrap; justify-content: center;
     z-index: 1000;
   }
   button {
     padding: 8px 14px; border: none; border-radius: 5px;
-    background: #007bff; color: white; cursor: pointer;
-    font-size: 14px;
+    background: #007bff; color: white; cursor: pointer; font-size: 14px;
   }
   button:hover { background: #0056b3; }
   @media (max-width: 400px) {
@@ -49,7 +46,7 @@
 // Inicializa mapa
 let map = L.map('map').setView([0, 0], 2);
 
-// Mapa satélite via Leaflet Providers (Esri World Imagery)
+// Mapa satélite via Esri World Imagery
 L.tileLayer.provider('Esri.WorldImagery').addTo(map);
 
 let pathCoords = [];
@@ -57,14 +54,14 @@ let pathLine, arrowHead;
 let watchId;
 let pontoInicial = null;
 
-// Função Iniciar
+// Iniciar rastreamento
 function startTracking() {
   pathCoords = [];
   pontoInicial = null;
   if (watchId) navigator.geolocation.clearWatch(watchId);
 
   if (!navigator.geolocation) {
-    alert("Seu navegador não suporta geolocalização.");
+    alert("Navegador não suporta geolocalização.");
     return;
   }
 
@@ -73,9 +70,11 @@ function startTracking() {
     let lng = pos.coords.longitude;
     let latlng = [lat, lng];
 
-    if (pathCoords.length === 0) {
+    // Marca ponto inicial
+    if (!pontoInicial) {
       pontoInicial = latlng;
-      L.marker(latlng).addTo(map)
+      L.marker(pontoInicial)
+        .addTo(map)
         .bindPopup(`Ponto Inicial<br>Lat: ${lat.toFixed(6)}<br>Lng: ${lng.toFixed(6)}`)
         .openPopup();
       map.setView(latlng, 16);
@@ -83,9 +82,11 @@ function startTracking() {
 
     pathCoords.push(latlng);
 
+    // Desenha percurso
     if (pathLine) map.removeLayer(pathLine);
     pathLine = L.polyline(pathCoords, {color: 'blue'}).addTo(map);
 
+    // Setas mostrando direção
     if (arrowHead) map.removeLayer(arrowHead);
     arrowHead = L.polylineDecorator(pathLine, {
       patterns: [{
@@ -101,16 +102,16 @@ function startTracking() {
 
   }, err => {
     console.error(err);
-    alert("Erro ao capturar localização. Verifique permissões e HTTPS.");
+    alert("Erro ao obter localização: " + err.message);
   }, { enableHighAccuracy: true });
 }
 
-// Função Parar
+// Parar rastreamento
 function stopTracking() {
   if (watchId) {
     navigator.geolocation.clearWatch(watchId);
     watchId = null;
-    alert(`Caminho gravado!\nPonto Inicial: ${pontoInicial}`);
+    alert(`Rastreamento parado!\nPonto inicial: ${pontoInicial}`);
   }
 }
 
